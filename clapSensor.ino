@@ -1,3 +1,0 @@
-bool getClap(){
-  return false; 
-}
