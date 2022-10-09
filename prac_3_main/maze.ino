@@ -3,84 +3,167 @@
   void mazeState(){
   bool go_to_start = false;
   while(!go_to_start){  
+    //SNC 145 (2|1|1)
+  /*
+    DAT1 = 1 if Clap/Snap was detected, else DAT1 = 0.
+    DAT1 = 1: System moves to SOS state
+    DAT1 = 0: SNC moves to Touch Detection
+        
+    DAT1 contains whether a clap or snap was detected.
+
+  */
     dp.controlByte.val = 145;
-    dp.dat1 = 3;
-    dp.dat0 = 3;
-    dp.dec = 3;
+    dp.dat1 = 0;
+    dp.dat0 = 0;
+    dp.dec = 0;
     Serial << dp;
     
-    if(getClap()){
-    
+    if(getClap()){    
       currentState = sos;
       return;
       
     }
-    
-      dp.controlByte.val = 147;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
 
-      dp.controlByte.val = 161;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+//  SNC 146(2|1|2)
+/*
+DAT1 = 1 if touch detected, else DAT1 = 0. 
+DAT1 = 1: System and Subsystems move to IDLE state.
+DAT1 = 0: SNC moves to navigation control state (NAVCON)
 
-      dp.controlByte.val = 162;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+DAT1 contains whether a touch was detected. 
+DAT1 = 1: SNC moves to Touch Detection in IDLE state after clearing DAT1.
 
-      dp.controlByte.val = 163;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+*/
 
-      dp.controlByte.val = 164;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+    dp.controlByte.val = 146;
+    dp.dat1 = 0;
+    dp.dat0 = 0;
+    dp.dec = 0;
+    Serial << dp;
 
-      if(getEndOfMaze()){
-        dp.controlByte.val = 179;
-        dp.dat1 = 3;
-        dp.dat0 = 3;
-        dp.dec = 3;
-        Serial << dp;
-        
+    if(getTouch()){    
+      currentState = idle;
+      return;      
+    }
+// SNC 147(2|1|3) (NAVCON).
+/*
+DEC = 0 or 1: DATA bytes contain tangential wheel speeds.
+0 = forward 1 = backward DEC = 2 or 3: DATA bytes
+contain required angle of rotation of the MARV
+2 = left (CCW, positive).
+3 = right (CW, negative).
 
-        dp.controlByte.val = 1;
-        dp.dat1 = 3;
-        dp.dat0 = 3;
-        dp.dec = 3;
-        Serial << dp;
+if DEC = 0 or 1:
+DAT1 = right wheel speed in mm/s,
+DAT0 = left wheel speed in mm/s
+if DEC = 2 or 3:
+DATA = <DAT1:DAT0> contains the angle of
+rotation in degrees between 5° and 360°.
+*/
 
-        // goto start_of_loop;
-      }
 
-      dp.controlByte.val = 177;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+    dp.controlByte.val = 147;
+    dp.dat1 = 3;
+    dp.dat0 = 3;
+    dp.dec = 3;
+    Serial << dp;
 
-      dp.controlByte.val = 178;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+//MDPS->161(2|2|1)
+/*
+DAT1 = 0
+DAT0 = 0
+DEC = 0
+*/
 
-      dp.controlByte.val = 145;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
+    dp.controlByte.val = 161;
+    dp.dat1 = 3;
+    dp.dat0 = 3;
+    dp.dec = 3;
+    Serial << dp;
 
+//MDPS->162(2|2|2)
+/*
+DATA = <DAT1:DAT0> contains the last measured executed
+rotation angle.
+DEC = 2: Rotation was to the left (CCW, positive).
+DEC = 3: Rotation was to the right (CW, negative).
+
+The executed rotation angle refers to the
+actual measured angle the MARV rotated
+after having received a rotation instruction
+from the SNC.
+SNC displays the angle on indicators.
+*/
+    dp.controlByte.val = 162;
+    dp.dat1 = 3;
+    dp.dat0 = 3;
+    dp.dec = 3;
+    Serial << dp;
+
+//MDPS->163(2|2|3)
+    dp.controlByte.val = 163;
+    dp.dat1 = 3;
+    dp.dat0 = 3;
+    dp.dec = 3;
+    Serial << dp;
+
+//MDPS->164(2|2|4)
+    dp.controlByte.val = 164;
+    dp.dat1 = 3;
+    dp.dat0 = 3;
+    dp.dec = 3;
+    Serial << dp;
+
+    if(getEndOfMaze()){
+      //Sensor->179(2|3|3)
+      receive();
+
+      // dp.controlByte.val = 179;
+      // dp.dat1 = 3;
+      // dp.dat0 = 3;
+      // dp.dec = 3;
+      // Serial << dp;
+
+      //Hub->1(0|0|1)
+      /*
+      Subsystems move to end of maze state.
+      */
+      receive();
+
+      currentState = hubInit;
+      return
+    }
+
+    //Sensor 177(2|3|1)
+    /*
+DATA = <DAT1:DAT0>
+contains colour sensed
+by each sensor as a 3 bit
+code:
+W = White = 000
+R = Red = 001
+G = Green = 010
+B = Blue = 011
+K = Black = 100
+
+DATA<2:0> = sensor5
+DATA<5:3> = sensor 4
+DATA<8:6> = sensor 3
+DATA<11:9> = sensor 2
+DATA<14:12>=sensor 1    
+    */
+    receive();
+
+    //Sensor 178(2|3|2) Sens. INCIDENCE 
+    /*
+    DAT1 contains the last measured angle of incidence.
+    SNC displays the last measured angle of
+    incidence in degrees on indicators.
+    */
+    receive();
+
+    currentState = maze;
+    return
       
   }  
 }

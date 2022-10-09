@@ -116,6 +116,7 @@ void setup() {
 }
 
 enum states {
+  hubInit,
   idle,
   calibration,
   maze,

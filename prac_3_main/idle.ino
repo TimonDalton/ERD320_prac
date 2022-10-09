@@ -2,6 +2,15 @@ void idleState(){
   receive();
   while(receivedPacket.controlByte.val != 0){}
 
+
+// SNC 16 (0|1|0) 
+// DAT1 = 1 if touch
+// detected, else DAT1 = 0.
+// DAT1 = 0: Remain IDLE
+// DAT0 = Designed
+// operating speed vop
+// when DAT1 = 1
+
   auto cb = createControlByte(0,1,0);
   DataPacket dp;
   dp.controlByte.val = 16;

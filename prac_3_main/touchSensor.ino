@@ -3,6 +3,9 @@ bool getTouched(){
   // return beingTouched;
   return true;
   }
+bool getTouch(){
+  return getTouched();
+  }
 
 // ////pin setup
 // #include <string>
