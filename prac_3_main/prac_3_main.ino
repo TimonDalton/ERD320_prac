@@ -1,7 +1,20 @@
 #include <string>
-const int touch_ADC_pin = 26;
-const int microphone_ADC_pin = 27;
-boolean waiting;
+
+#include <U8x8lib.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <arduino.h>
+
+const int touch_ADC_pin = 27;
+const int microphone_ADC_pin = 26;
+
+// const int screen_power_pin = 18;
+// const int screen_gnd_pin = 19;
+// const int screen_SCL_pin = 20;
+// const int screen_SDA_pin = 21;
+
+bool beingTouched;
+bool clapped;
 int micAdcVal;
 
 struct ControlByte {
@@ -63,9 +76,6 @@ unsigned createControlByte(int sys,int sub,int isr){
   return ret;
 }
 
-int * in_packet = new int[4];
-int * out_packet = new int[4];
-
 void receive()
 {
     while (Serial.available() == 0) {;}
@@ -82,174 +92,55 @@ void receive()
     }
 }
 
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
+int previouslyCheckedTimeT = 0;
+int previouslyCheckedClapTime = 0;
+int generalTimer = 0;
 void setup() {
   Serial.begin(19200);
 
   // Serial.println("Start of Serial");
+  u8x8.begin();
+  u8x8.setFont(u8x8_font_chroma48medium8_r);//Small Font 16 Characters
+  u8x8.noInverse();//Normal
+  u8x8.clear();
+  u8x8.setCursor(5,0); //horisontal, vertical
+  u8x8.print("STARTUP");
+
+  pinMode(touch_ADC_pin, OUTPUT);
+  
+  beingTouched = false;
+  clapped = false;
+  pinMode(microphone_ADC_pin, INPUT);
+
 }
 
+enum states {
+  idle,
+  calibration,
+  maze,
+  sos
+};
+int currentState = idle;
+
 void loop() {
-start_of_loop:
-  receive();
-  auto cb = createControlByte(0,1,0);
 
-  DataPacket dp;
-  dp.controlByte.val = 16;
-  dp.dat1 = 0;
-  dp.dat0 = 0;
-  dp.dec = 0;
-  Serial << dp;
-  
-  bool touched = false;
-  while(!touched){
-    touched = getTouched();
+  if(micros() - generalTimer > 5000){
+    generalTimer = micros();
+    checkForClap();
   }  
-  
-  dp.controlByte.val = 16;
-  dp.dat1 = 1;
-  dp.dat0 = 0;
-  dp.dec = 0;
-  Serial << dp;
 
-//start of cal
-  receive();
-    
-  
-  dp.controlByte.val = 112;
-  dp.dat1 = 0;
-  dp.dat0 = 0;
-  dp.dec = 0;
-  Serial << dp;
-  receive();
-    
-  dp.controlByte.val = 96;
-  dp.dat1 = 3;
-  dp.dat0 = 3;
-  dp.dec = 3;
-
-  touched = false;
-  
-  while(!touched){
-    dp.controlByte.val = 97;
-    dp.dat1 = 3;
-    dp.dat0 = 3;
-    dp.dec = 3;
-    Serial << dp;
-    
-    dp.controlByte.val = 113;
-    dp.dat1 = 3;
-    dp.dat0 = 3;
-    dp.dec = 3;
-    Serial << dp;
-    
-    dp.controlByte.val = 80;
-    dp.dat1 = 3;
-    dp.dat0 = 3;
-    dp.dec = 3;
-    Serial << dp;
-    
-    touched = getTouched;
-  }
-
-  
-  //start of maze
-  
-  bool go_to_start = false;
-  while(!go_to_start){  
-    dp.controlByte.val = 145;
-    dp.dat1 = 3;
-    dp.dat0 = 3;
-    dp.dec = 3;
-    Serial << dp;
-    
-    if(getClap()){
-      //do SOS and start while loop over
-  
-      dp.controlByte.val = 228;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-    
-      dp.controlByte.val = 208;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-  
-      while (!getClap()){}
-    
-      continue;
-      
-    }
-    
-      dp.controlByte.val = 147;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      dp.controlByte.val = 161;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      dp.controlByte.val = 162;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      dp.controlByte.val = 163;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      dp.controlByte.val = 164;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      if(getEndOfMaze()){
-        dp.controlByte.val = 179;
-        dp.dat1 = 3;
-        dp.dat0 = 3;
-        dp.dec = 3;
-        Serial << dp;
         
-
-        dp.controlByte.val = 1;
-        dp.dat1 = 3;
-        dp.dat0 = 3;
-        dp.dec = 3;
-        Serial << dp;
-
-        goto start_of_loop;
-      }
-
-      dp.controlByte.val = 177;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      dp.controlByte.val = 178;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      dp.controlByte.val = 145;
-      dp.dat1 = 3;
-      dp.dat0 = 3;
-      dp.dec = 3;
-      Serial << dp;
-
-      
-  }  
-
-
+  if (currentState == idle){
+    idleState();
+  }else
+  if (currentState == calibration){
+    calibrationState();
+  }else        
+  if (currentState == maze){
+    mazeState();
+  }else        
+  if (currentState == sos){
+    SOSstate();
+  }
 }

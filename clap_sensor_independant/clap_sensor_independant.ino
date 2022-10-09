@@ -1,29 +1,31 @@
 #include <string>
 const int touch_ADC_pin = 27;
 const int microphone_ADC_pin = 26;
-boolean beingTouched;
-int micAdcVal = 0;
-template <typename T>
-Print& operator<<(Print& printer, T value)
-{
+boolean waiting;
+int micAdcVal;
+
+template<typename T>
+Print& operator << (Print& printer,T value){
   printer.print(value);
-  return printer;
-} 
+  return printer;  
+}
 
 void setup() {
   // put your setup code here, to run once:
 
   Serial.begin(115200);
-  while (!Serial) {
-    ;
-  }
-  Serial.println("Start of Serial");
 
-  
+  Serial.println("Start of Serial"); 
+   waiting = false;
     pinMode(microphone_ADC_pin, INPUT);
-  //  pinMode(26, OUTPUT);
+}
 
-//  avgChain = new AveragingChain(32);
+int previouslyCheckedTime = 0;
+int timeSinceLastCall() {
+  int t = micros();
+  int ret = t - previouslyCheckedTime;
+  previouslyCheckedTime = t;
+  return ret;
 }
 
 void readMicADCto(int * ptr) {
@@ -31,16 +33,26 @@ void readMicADCto(int * ptr) {
   *ptr = analogRead(microphone_ADC_pin);
 }
 int counter = 0;
+const int limit = 242;
 void loop() {
-  // put your main code here, to run repeatedly:
   readMicADCto(&micAdcVal);
-  if (micAdcVal > 200){//60 for clap only
-    Serial << "micADC: "<< micAdcVal <<"\n";
-  }
+ if (micAdcVal > limit){//60 for clap only
+   Serial << "micADC: "<< micAdcVal <<"\n";
+ }
   counter ++;
-  if (counter == 50000){
-    Serial << "-----------------------avg-"<<"\n";
+  if (counter == 50000){   
+    Serial << "micADC right now: "<< micAdcVal <<"\n";
     counter = 0;
     }
-  
+
+  if (micros() - previouslyCheckedTime < 800000){
+    waiting = true;
+    }else{
+    waiting = false;    
+  }
+  if (micAdcVal > limit  && !waiting) { //typically goes from 6000 to 50 on touch
+      Serial.println("Clap Sensed");
+      waiting = true;
+      timeSinceLastCall();
+  }
 }
