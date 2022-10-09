@@ -1,6 +1,6 @@
 void calibrationState(){
   //start of cal
-  receive();//expects 112(1|3|0) from sensor
+  receive();//expects 112(1|3|0) from sensor.MDPS moves to speed calibration
   receive();//expects 96(1|2|0) from MDPS
   /*
     MDPS. vop. (CAL) vop is the default forward tangential wheel speed.  
@@ -36,13 +36,21 @@ DATA<14:12>=sensor 1
 DAT1 = 1 if touch detected, else DAT1 = 0. DAT1 = 0: Remain IDLE
 DAT0 = Designed operating speed vop when DAT1 = 1
 */
+    int desOpSpd = 3;
+
     dp.controlByte.val = 80;
-    dp.dat1 = 1;
-    dp.dat0 = 1;
-    dp.dec = 0;
+    touched = getTouched();
+    if(touched){
+      dp.dat1 = desOpSpd;
+      dp.dat0 = 1;
+      dp.dec = 0;
+    }else{
+      dp.dat1 = desOpSpd;
+      dp.dat0 = 1;
+      dp.dec = 0;
+    }
     Serial << dp;
     
-    touched = getTouched();
   }
 
   currentState = maze;

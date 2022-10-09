@@ -92,6 +92,16 @@ void receive()
     }
 }
 
+enum moves {//possible moves to make in navcon
+  forward,
+  backward,
+  left,
+  right
+}
+int currentMove = forward;
+int currentMoveD0 = 0;
+int currentMoveD1 = 0;
+
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 int previouslyCheckedTimeT = 0;
 int previouslyCheckedClapTime = 0;
@@ -122,6 +132,17 @@ enum states {
   maze,
   sos
 };
+
+enum colourCodes{
+  W = 0,
+  R = 1,
+  G = 2,
+  B = 3,
+  K = 4
+}
+const char[] constColourArr = {'W','R','G','B','K'};
+
+char colourArray[] = {'','','','',''};
 int currentState = idle;
 
 void loop() {
@@ -129,8 +150,7 @@ void loop() {
   if(micros() - generalTimer > 5000){
     generalTimer = micros();
     checkForClap();
-  }  
-
+  }
         
   if (currentState == idle){
     idleState();
