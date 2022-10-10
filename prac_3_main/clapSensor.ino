@@ -5,6 +5,7 @@ bool getClap(){//implement commented out version later
   //   }
   //   return clapped;
   // }
+  delay(1000);
   return false; 
 }
 

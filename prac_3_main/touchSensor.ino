@@ -1,6 +1,7 @@
 bool getTouched(){
   // updateTouch();
   // return beingTouched;
+  delay(1000);
   return true;
   }
 bool getTouch(){

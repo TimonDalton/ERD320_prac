@@ -13,7 +13,8 @@ void calibrationState(){
   
   while(!touched){
     receive();//MDPS->97(1|2|1); Data = 0,0,0
-    receive();//Sensor->113(1|3|1)
+    while (dp.controlByte.val != 113)
+      receive();//Sensor->113(1|3|1)
 /*
 DATA = <DAT1:DAT0>
 contains colour sensed
@@ -36,20 +37,21 @@ DATA<14:12>=sensor 1
 DAT1 = 1 if touch detected, else DAT1 = 0. DAT1 = 0: Remain IDLE
 DAT0 = Designed operating speed vop when DAT1 = 1
 */
-    int desOpSpd = 3;
+    int desOpSpd = 2;
 
     dp.controlByte.val = 80;
     touched = getTouched();
     if(touched){
-      dp.dat1 = desOpSpd;
-      dp.dat0 = 1;
+      dp.dat1 = 1;
+      dp.dat0 = desOpSpd;
       dp.dec = 0;
     }else{
-      dp.dat1 = desOpSpd;
-      dp.dat0 = 1;
+      dp.dat1 = 0;
+      dp.dat0 = 0;
       dp.dec = 0;
     }
     Serial << dp;
+  delay(20);
     
   }
 

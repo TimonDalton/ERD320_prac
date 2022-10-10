@@ -53,8 +53,8 @@ void updateColoursRead(u_int D1,u_int D2){
   for (int i = 5;i>=0;i--){
     for (int j=0;j<3;j++){
       u_int x = 0;
-      bitSet(x,j,bits[i*3+j]);
-      coloursArray[i] = constColourArr[x];      
+      bitWrite(x,j,bits[i*3+j]);
+      colourArray[i] = constColourArr[x];      
     }
   }
 }
@@ -62,3 +62,56 @@ void updateColoursRead(u_int D1,u_int D2){
 void updateAngleOfIncidence(int angle){
   
 }
+
+void navigateNavcon(){
+//move forward
+  if(navConData.lineColour == green || navConData.lineColour == red){
+    if(navConData.incidenceAngle >= 5){
+      if (navConData.lineColour == red){
+        mazeEnd = true;      
+        endMaze();
+      }else{
+        //forward        
+      }
+    }else{
+      if(navConData.incidenceAngle <= 45){
+        stopInMaze();
+        reverseInMaze();
+        correct5deg();
+        //FW
+      }else{
+        stopInMaze();
+       reverseInMaze();
+        correct15deg();
+        //FW        
+      }
+    }
+  }else if (navConData.lineColour == blue || navConData.lineColour == black){
+    if (navConData.incidenceAngle <= 45){
+      stopInMaze();
+      reverseInMaze();
+      correct90plusTheta();
+    }else{
+      stopInMaze();
+      reverseInMaze();
+      correct90minTheta();      
+    }
+  }else{
+    //move forward
+    
+  }
+}
+
+void endMaze(){}
+
+void stopInMaze(){}
+
+void reverseInMaze(){}
+
+void correct5deg(){}
+
+void correct15deg(){}
+
+void correct90minTheta(){}
+
+void correct90plusTheta(){}

@@ -22,7 +22,7 @@ void sosState(){
       DAT1 = 0: Wait/loop
       */
       
-      clapped = getClapped();
+      clapped = getClap();
       clapLoop = clapped;
 
       dp.controlByte.val = 208;

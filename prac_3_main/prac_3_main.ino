@@ -15,7 +15,28 @@ const int microphone_ADC_pin = 26;
 
 bool beingTouched;
 bool clapped;
+bool mazeEnd;
 int micAdcVal;
+
+enum ColourCodes{
+  white = 0,
+  red = 1,
+  green = 2,
+  blue = 3,
+  black = 4//k
+};
+
+struct NavCon_Data{
+    int distanceTravelled;
+    int angleRotated;
+    int incidenceAngle;
+    bool hasTurnedAroundOnce;
+    ColourCodes lineColour;
+        
+
+    
+};
+NavCon_Data navConData;
 
 struct ControlByte {
   int sys,sub,isr;
@@ -35,11 +56,12 @@ struct DataPacket {
 };
 Print& operator<<(Print& printer, DataPacket value)
 {
-  
+  printer.flush();
   printer.write(value.controlByte.val);
   printer.write(value.dat1);
   printer.write(value.dat0);
   printer.write(value.dec);
+  printer.flush();
   return printer;
 }
 template <typename T>
@@ -53,11 +75,7 @@ Print& operator<<(Print& printer, T value)
 //   *ptr = analogRead(microphone_ADC_pin);
 // }
 
-const unsigned control_byte = 0;
-const unsigned dat1 = 1;
-const unsigned dat0 = 2;
-const unsigned dec = 3;
-DataPacket receivedPacket;
+DataPacket dp;
 
 void sendPacket(int arr[]){
   for (int i =0;i<4;i++){
@@ -84,21 +102,21 @@ void receive()
       for (int i = 0;i<4;i++){
 
       serial_in = Serial.read();
-        receivedPacket.controlByte.val = byte(serial_in.toInt());
-        receivedPacket.dat1 = byte(serial_in.toInt());
-        receivedPacket.dat1 = byte(serial_in.toInt());
-        receivedPacket.dec = byte(serial_in.toInt());
+        dp.controlByte.val = byte(serial_in.toInt());
+        dp.dat1 = byte(serial_in.toInt());
+        dp.dat1 = byte(serial_in.toInt());
+        dp.dec = byte(serial_in.toInt());
       }
     }
 }
 
-enum moves {//possible moves to make in navcon
+enum Moves {//possible moves to make in navcon
   forward,
   backward,
   left,
   right
-}
-int currentMove = forward;
+};
+Moves currentMove = forward;
 int currentMoveD0 = 0;
 int currentMoveD1 = 0;
 
@@ -133,16 +151,10 @@ enum states {
   sos
 };
 
-enum colourCodes{
-  W = 0,
-  R = 1,
-  G = 2,
-  B = 3,
-  K = 4
-}
-const char[] constColourArr = {'W','R','G','B','K'};
 
-char colourArray[] = {'','','','',''};
+const char constColourArr[]  = {'W','R','G','B','K'};
+
+char colourArray[5];
 int currentState = idle;
 
 void loop() {
@@ -150,8 +162,12 @@ void loop() {
   if(micros() - generalTimer > 5000){
     generalTimer = micros();
     checkForClap();
+    updateTouch();
   }
-        
+
+  if (currentState == hubInit){
+    hubInitState();    
+  }else
   if (currentState == idle){
     idleState();
   }else
@@ -162,6 +178,6 @@ void loop() {
     mazeState();
   }else        
   if (currentState == sos){
-    SOSstate();
+    sosState();
   }
 }

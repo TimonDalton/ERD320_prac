@@ -105,11 +105,11 @@ from the SNC.
 SNC displays the angle on indicators.
 */
   int rotation = 256*dp.dat1;
-  rotation += dp.dat0
+  rotation += dp.dat0;
   if (dp.dec == 2){
-    sign *= 1;
+    rotation *= 1;
   }else{
-    sign *= -1;
+    rotation *= -1;
   }
 
   updateUsingActualRotatedAngle(rotation);
@@ -161,7 +161,7 @@ speeds on indicators.
       receive();
 
       currentState = hubInit;
-      return
+      return;
     }
 
     receive(); //Sensor 177(2|3|1)
@@ -190,10 +190,10 @@ speeds on indicators.
     */
     receive();
     displayAngleOfIncidence(dp.dat1);
-    updateAngleOfIncidence(dp.dat1)l
+    updateAngleOfIncidence(dp.dat1);
 
     currentState = maze;
-    return
+    return;
       
   }  
 }
