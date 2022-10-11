@@ -21,11 +21,11 @@ void idleState(){
     touched = getTouched();
   }  
   
-  receive();
+  // receive();
 
   dp.controlByte.val = 16;
   dp.dat1 = 1;//touch detected
-  dp.dat0 = 2;
+  dp.dat0 = 1;
   dp.dec = 1;
   Serial << dp;
   delay(20);

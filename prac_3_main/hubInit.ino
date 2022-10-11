@@ -1,5 +1,4 @@
 void hubInitState(){
-  Serial2.print("hehe");
 // HUB 0 (0|0|0)
 /*
 System and Subsystems
