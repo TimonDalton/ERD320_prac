@@ -50,7 +50,7 @@ void loop() {
     }else{
     waiting = false;    
   }
-  if (micAdcVal > limit  && !waiting) { //typically goes from 6000 to 50 on touch
+  if (micAdcVal > limit  && !waiting) {
       Serial.println("Clap Sensed");
       waiting = true;
       timeSinceLastCall();
